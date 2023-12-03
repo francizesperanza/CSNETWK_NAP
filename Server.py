@@ -43,10 +43,11 @@ def handle_commands (msg, conn, addr):
             print(f"User {addr} tried to join the File Exchange Server again.")
             reply = "You already joined the File Exchange Server."
             conn.send(reply.encode(FORMAT))
+            return True
         else:
             reply = "Error: Command parameters do not match or is not allowed."
             conn.send(reply.encode(FORMAT))
-        return True
+            return True
     elif msg.startswith("/?"):
         if re.match(r'^/\?$', msg):
             print(f"User {addr} requested for help.")
@@ -94,7 +95,7 @@ def main ():
     server.bind(ADDR)
     server.listen()
     print(f"Server is listening on {ADDR}")
-    
+
     while True:
         conn, addr = server.accept()
         thread = threading.Thread(target=handle_client, args=(conn, addr))
