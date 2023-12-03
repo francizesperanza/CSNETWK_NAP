@@ -56,17 +56,20 @@ def main():
         user_input = input("Input: ")
         match = re.match(r'^/join (\S+) (\S+)$', user_input)
 
-        if match:
-            ip = match.group(1)
-            port = int(match.group(2))
-            ADDR = (ip, port)
-            joined = True
+        if user_input.startswith("/join"):
+            if match:
+                ip = match.group(1)
+                port = int(match.group(2))
+                ADDR = (ip, port)
+                joined = True
+            else:
+                print("Error: Command parameters do not match or is not allowed.")
         elif re.match(r'^/leave$', user_input):
             print("Error: Disconnection failed. Please connect to the server first.")
         elif re.match(r'^/\?$', user_input):
             print_command_list()
         else:
-            print("Error: Command parameters do not match or is not allowed.")
+            print("Error: Command not found.")
 
     client = socket(AF_INET, SOCK_STREAM)
 
@@ -79,13 +82,12 @@ def main():
             msg = input("Input: ")
 
             client.send(msg.encode(FORMAT))
+            reply = client.recv(SIZE).decode(FORMAT)
+            print(f"{reply}")
 
             if msg == ("/leave"):
                 print("Disconnecting from the server...")
                 connected = False
-            else:
-                msg = client.recv(SIZE).decode(FORMAT)
-                print(f"{msg}")
 
     except ConnectionRefusedError:
         print("Error: Connection to the Server has failed! Please check IP Address and Port Number.")
