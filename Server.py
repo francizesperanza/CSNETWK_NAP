@@ -19,6 +19,7 @@ def handle_client(conn, addr):
         conn.send(msg.encode(FORMAT))
 
     conn.close()
+
 def main ():
     if len(sys.argv) != 3:
         print("The format is: python Server.py <ip> <port>")
