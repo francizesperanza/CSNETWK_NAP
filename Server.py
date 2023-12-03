@@ -1,85 +1,39 @@
 from socket import *
 import threading
 import sys
-import re
 
 SIZE = 1024
 FORMAT = "utf-8"
+SUCCESS = "200"
+ERROR = "400"
 
-def print_command_list ():
-    return """
+def register(conn, registeredUsers, msg):
+    parts = msg.split(" ")
+    username = parts[1]
 
-    File Exchange System Command List:
-          
-    /join <ip> <port>
-          - connects you to the File Exchange Server.
-    
-    /leave
-          - disconnects you from the File Exchange Server.
-    
-    /register <handle>
-          - registers you under a unique alias and allows you
-            to use the server's functionalities.
-    
-    /store <filename>
-          - allows the client to send a file to the server.
-    
-    /dir
-          - requests the server for a list of all the files in
-            in the server
-    
-    /get <filename>
-          - fetches a file from the server
-
-    /?
-          - shows all Input Syntax commands for reference
-    
-
-    """
-
-def handle_commands (msg, conn, addr):
-    if msg.startswith("/join"):
-        if re.match(r'^/join (\S+) (\S+)$', msg):
-            print(f"User {addr} tried to join the File Exchange Server again.")
-            reply = "You already joined the File Exchange Server."
-            conn.send(reply.encode(FORMAT))
-            return True
-        else:
-            reply = "Error: Command parameters do not match or is not allowed."
-            conn.send(reply.encode(FORMAT))
-            return True
-    elif msg.startswith("/?"):
-        if re.match(r'^/\?$', msg):
-            print(f"User {addr} requested for help.")
-            help = print_command_list()
-            conn.send(help.encode(FORMAT))
-            return True
-        else:
-            reply = "Error: Command parameters do not match or is not allowed."
-            conn.send(reply.encode(FORMAT))
-            return True
-    elif msg.startswith("/leave"):
-        if re.match(r'^/leave$', msg):
-            print(f"User {addr} disconnected from the server.")
-            reply = "Connection closed. Thank you!"
-            conn.send(reply.encode(FORMAT))
-            return False
-        else:
-            reply = "Error: Command parameters do not match or is not allowed."
-            conn.send(reply.encode(FORMAT))
-            return True
+    if username in registeredUsers:
+        conn.send(ERROR.encode(FORMAT))
     else:
-        reply = "Error: Command not found."
-        conn.send(reply.encode(FORMAT))
-        return True
+        conn.send(SUCCESS.encode(FORMAT))
+        registeredUsers.append(username)
+        print(f"new users: {registeredUsers}")
+    
 
-def handle_client(conn, addr):
+
+def handle_client(conn, addr, registeredUsers):
     print(f"New client connected {addr}")
     connected = True
+
     while connected:
-        msg = conn.recv(SIZE).decode(FORMAT)
+        msg = conn.recv(SIZE).decode(FORMAT) #error here if a client forcibly closes
         print(f"User {addr} said: {msg}")
-        connected = handle_commands(msg, conn, addr)
+        if msg == "/leave":
+            print(f"User {addr} disconnected from the server.")
+            connected = False
+
+        if msg.startswith("/register"):
+            register(conn, registeredUsers, msg)
+
     conn.close()
 
 def main ():
@@ -90,6 +44,7 @@ def main ():
     ip = sys.argv[1]
     port = int(sys.argv[2])
     ADDR = (ip, port)
+    registeredUsers = []
 
     server = socket(AF_INET, SOCK_STREAM)
     server.bind(ADDR)
@@ -98,7 +53,7 @@ def main ():
 
     while True:
         conn, addr = server.accept()
-        thread = threading.Thread(target=handle_client, args=(conn, addr))
+        thread = threading.Thread(target=handle_client, args=(conn, addr, registeredUsers))
         thread.start()
         print(f"\nActive Connections: {threading.active_count() - 1}")
 
