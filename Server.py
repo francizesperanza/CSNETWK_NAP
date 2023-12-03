@@ -37,7 +37,23 @@ def print_command_list ():
 
     """
 
-def handle_commands (msg, conn, addr):
+def handleRegister(conn, registeredUsers, msg):
+    parts = msg.split()
+    username = parts[1]
+
+    if len(parts) == 2 and parts[1]:
+        if username in registeredUsers:
+            reply = "Error: Registration failed. Handle or alias already exists."
+        else: 
+            registeredUsers.append(username)
+            reply = f"Welcome {username}!"
+    else:
+        reply = "Error: Command parameters do not match or is not allowed."
+
+    conn.send(reply.encode(FORMAT))
+
+
+def handle_commands (msg, conn, addr, registeredUsers):
     if msg.startswith("/join"):
         if re.match(r'^/join (\S+) (\S+)$', msg):
             print(f"User {addr} tried to join the File Exchange Server again.")
@@ -68,18 +84,21 @@ def handle_commands (msg, conn, addr):
             reply = "Error: Command parameters do not match or is not allowed."
             conn.send(reply.encode(FORMAT))
             return True
+    elif re.match(r'^/register\s*(\S+)?\s*$', msg) and not re.match(r'^/register\S', msg):
+            handleRegister(conn, registeredUsers, msg)
+            return True
     else:
         reply = "Error: Command not found."
         conn.send(reply.encode(FORMAT))
         return True
 
-def handle_client(conn, addr):
+def handle_client(conn, addr, registeredUsers):
     print(f"New client connected {addr}")
     connected = True
     while connected:
         msg = conn.recv(SIZE).decode(FORMAT)
         print(f"User {addr} said: {msg}")
-        connected = handle_commands(msg, conn, addr)
+        connected = handle_commands(msg, conn, addr, registeredUsers)
     conn.close()
 
 def main ():
@@ -90,6 +109,7 @@ def main ():
     ip = sys.argv[1]
     port = int(sys.argv[2])
     ADDR = (ip, port)
+    registeredUsers = []
 
     server = socket(AF_INET, SOCK_STREAM)
     server.bind(ADDR)
@@ -98,7 +118,7 @@ def main ():
 
     while True:
         conn, addr = server.accept()
-        thread = threading.Thread(target=handle_client, args=(conn, addr))
+        thread = threading.Thread(target=handle_client, args=(conn, addr, registeredUsers))
         thread.start()
         print(f"\nActive Connections: {threading.active_count() - 1}")
 
