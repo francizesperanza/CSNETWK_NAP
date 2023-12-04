@@ -85,7 +85,11 @@ def handleRegister(conn, registeredUsers, msg, thisUser):
 
 
 def handleStore(conn, msg, thisUser):
+    print("conn: ", conn)
+    print("msg: ", msg)
+    print("thisUser: ", thisUser)
     parts = msg.split()
+    print("parts: ", parts)
     if thisUser is None:
         reply = "Error: File Storage Failed. You are not Registered."
         print("Aboring /store... Client not Registered...")
@@ -135,6 +139,73 @@ def handleStore(conn, msg, thisUser):
     
     conn.send(reply.encode(FORMAT))
     
+
+def handleGet(conn, msg):
+    parts = msg.split()
+    fileName = parts[1]
+
+    currentDirectory = os.path.dirname(os.path.abspath(__file__))
+    filePath = os.path.join(currentDirectory, fileName)
+
+    if not os.path.exists(filePath): 
+        conn.send("FILE_NOT_FOUND".encode())
+    else:
+        conn.send("FILE_WAS_FOUND".encode())
+        with open(filePath, "rb") as file:
+            content = file.read(SIZE)
+            while content:
+                print("reading and sending...please wait...")
+                conn.send(len(content).to_bytes(4, byteorder='big'))
+                conn.send(content)
+                            
+                print(f"sent {content}")
+                content = file.read(SIZE)
+                print("reading done")
+
+            conn.send(len(b"FILE_TRANSFER_COMPLETE").to_bytes(4, byteorder='big'))     
+            conn.send(b"FILE_TRANSFER_COMPLETE")
+    
+    reply = conn.recv(SIZE).decode(FORMAT)
+    print(f"{reply}")
+
+
+
+# def handleGet(conn, fileName):
+#     # filePath = os.path.join(SERVER_FILE_DIR, fileName)
+
+#     # with open(filePath, "rb") as file:
+#     #     while True:
+#     #         content = file.read(SIZE)
+#     #         if not content:
+#     #             break
+#     #         conn.send(content)
+#     #     conn.send(b"<F_I_N>")
+#     # print(f"{fileName} sent successfully to the client.")
+
+
+#     # parts = fileName.split()
+#     # fileName = parts[1]
+#     print(f"file name: {fileName}")
+
+#     currentDirectory = os.path.dirname(os.path.abspath(__file__))
+#     filePath = os.path.join(currentDirectory, fileName)
+
+#     with open(filePath, "rb") as file:
+#         content = file.read(SIZE)
+#         print("content: ", content)
+#         while content:
+#             print("reading and sending...please wait...")
+#             conn.send(len(content).to_bytes(4, byteorder='big'))
+#             conn.send(content)
+
+#             print(f"sent {content}")
+#             content = file.read(SIZE)
+#             print("reading done")
+        
+#         conn.send(len(b"FILE_TRANSFER_COMPLETE").to_bytes(4, byteorder='big'))
+#         conn.send(b"FILE_TRANSFER_COMPLETE")
+
+
 
 
 def handleDir (conn, thisUser):
@@ -197,7 +268,18 @@ def handle_commands (msg, conn, addr, registeredUsers, thisUser):
 
     elif re.match(r'^/store\s*((\S+)?\s*)*$', msg) and not re.match(r'^/store\S', msg):
         handleStore(conn, msg, thisUser)
-    
+
+    # elif re.match(r'^/get (\S+)$', msg):
+    #     print("msg: ", msg)
+    #     fileName = re.match(r'^/get (\S+)$', msg).group(1)
+    #     handleGet(conn, fileName)
+
+    elif re.match(r'^/get\s*((\S+)?\s*)*$', msg) and not re.match(r'^/get\S', msg):
+        # reply = "/get in motion"
+        # conn.send(reply.encode(FORMAT))
+        handleGet(conn, msg)
+
+
     elif re.match(r'^/dir$', msg):
         handleDir(conn, thisUser)
             
