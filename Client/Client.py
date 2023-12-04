@@ -74,16 +74,44 @@ def main():
         match = re.match(r'^/join (\S+) (\S+)$', user_input)
 
         if user_input.startswith("/join"):
-            ip = match.group(1)
-            port = match.group(2)
+            if match:
+                ip = match.group(1)
+                port = match.group(2)
 
-            if is_valid_ip(ip) and is_valid_port(port):
-                ADDR = (ip, int(port))
-                joined = True
-            else:
+                if is_valid_ip(ip) and is_valid_port(port):
+                    ADDR = (ip, int(port))
+                    joined = True
+                else:
+                    print("Error: Command parameters do not match or is not allowed.")
+            elif user_input == "/join":
                 print("Error: Command parameters do not match or is not allowed.")
+            else:
+                print("Error: Command not found.")
+        elif user_input.startswith("/register"):
+            if re.match(r'^/register (\S+)$', user_input):
+                print("Error: Registration failed. Please connect to the server first.")
+            elif user_input == "/register":
+                print("Error: Command parameters do not match or is not allowed. You also need to join the File Exchange Server first.")
+            else:
+                print("Error: Command not found.")
+        elif user_input.startswith("/store"):
+            if re.match(r'^/store (\S+)$', user_input):
+                print("Error: File storing failed. Please connect to the server first.")
+            elif user_input == "/store":
+                print("Error: Command parameters do not match or is not allowed. You also need to join the File Exchange Server first.")
+            else:
+                print("Error: Command not found.")
+        elif user_input.startswith("/get"):
+            if re.match(r'^/get (\S+)$', user_input):
+                print("Error: File fetching failed. Please connect to the server first.")
+            elif user_input == "/get":
+                print("Error: Command parameters do not match or is not allowed. You also need to join the File Exchange Server first.")
+            else:
+                print("Error: Command not found.")
         elif re.match(r'^/leave$', user_input):
             print("Error: Disconnection failed. Please connect to the server first.")
+        elif re.match(r'^/dir$', user_input):
+            print("Error: File directory request failed. Please connect to the server first.")
         elif re.match(r'^/\?$', user_input):
             print_command_list()
         else:
