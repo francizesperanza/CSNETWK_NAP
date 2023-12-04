@@ -37,6 +37,23 @@ def print_command_list ():
 
     """)
 
+
+def is_valid_ip(ip):
+    try:
+        inet_aton(ip)
+        return True
+    except:
+        return False
+
+
+def is_valid_port(port):
+    try:
+        port = int(port)
+        return 0 < port < 65536
+    except:
+        return False
+
+
 def main():
     """
     This section checks if the running command for the Client instance is valid
@@ -57,10 +74,11 @@ def main():
         match = re.match(r'^/join (\S+) (\S+)$', user_input)
 
         if user_input.startswith("/join"):
-            if match:
-                ip = match.group(1)
-                port = int(match.group(2))
-                ADDR = (ip, port)
+            ip = match.group(1)
+            port = match.group(2)
+
+            if is_valid_ip(ip) and is_valid_port(port):
+                ADDR = (ip, int(port))
                 joined = True
             else:
                 print("Error: Command parameters do not match or is not allowed.")

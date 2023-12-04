@@ -6,6 +6,23 @@ import re
 SIZE = 1024
 FORMAT = "utf-8"
 
+
+def is_valid_ip(ip):
+    try:
+        inet_aton(ip)
+        return True
+    except:
+        return False
+
+
+def is_valid_port(port):
+    try:
+        port = int(port)
+        return 0 < port < 65536
+    except:
+        return False
+
+
 def print_command_list ():
     return """
 
@@ -115,8 +132,13 @@ def main ():
         return
 
     ip = sys.argv[1]
-    port = int(sys.argv[2])
-    ADDR = (ip, port)
+    port = sys.argv[2]
+    if is_valid_ip(ip) and is_valid_port(port):
+        ADDR = (ip, int(port))
+        joined = True
+    else:
+        print("Error: Invalid value for IP and/or Port")
+        return
     registeredUsers = []
 
     server = socket(AF_INET, SOCK_STREAM)
