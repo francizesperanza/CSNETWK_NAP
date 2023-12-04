@@ -79,7 +79,10 @@ def handleRegister(conn, registeredUsers, msg, thisUser):
 def handle_commands (msg, conn, addr, registeredUsers, thisUser):
     if msg.startswith("/join"):
         if re.match(r'^/join (\S+) (\S+)$', msg):
-            print(f"User {addr} tried to join the File Exchange Server again.")
+            if(thisUser):
+                print(f"{thisUser} tried to join the File Exchange Server again.")
+            else:
+                print(f"User {addr} tried to join the File Exchange Server again.")
             reply = "You already joined the File Exchange Server."
             conn.send(reply.encode(FORMAT))
             
@@ -89,7 +92,10 @@ def handle_commands (msg, conn, addr, registeredUsers, thisUser):
             
     elif msg.startswith("/?"):
         if re.match(r'^/\?$', msg):
-            print(f"User {addr} requested for help.")
+            if(thisUser):
+                print(f"{thisUser} requested for help.")
+            else:
+                print(f"User {addr} requested for help.")
             help = print_command_list()
             conn.send(help.encode(FORMAT))
             
@@ -99,7 +105,10 @@ def handle_commands (msg, conn, addr, registeredUsers, thisUser):
             
     elif msg.startswith("/leave"):
         if re.match(r'^/leave$', msg):
-            print(f"User {addr} disconnected from the server.")
+            if(thisUser):
+                print(f"{thisUser} disconnected from the server.")
+            else:
+                print(f"User {addr} disconnected from the server.")
             reply = "Connection closed. Thank you!"
             conn.send(reply.encode(FORMAT))
             return False, thisUser
@@ -122,7 +131,10 @@ def handle_client(conn, addr, registeredUsers):
     thisUser = None
     while connected:
         msg = conn.recv(SIZE).decode(FORMAT)
-        print(f"User {addr} said: {msg}")
+        if (thisUser):
+            print(f"{thisUser} said: {msg}")
+        else:
+            print(f"User {addr} said: {msg}")
         connected, thisUser = handle_commands(msg, conn, addr, registeredUsers, thisUser)
     conn.close()
 
@@ -135,7 +147,6 @@ def main ():
     port = sys.argv[2]
     if is_valid_ip(ip) and is_valid_port(port):
         ADDR = (ip, int(port))
-        joined = True
     else:
         print("Error: Invalid value for IP and/or Port")
         return

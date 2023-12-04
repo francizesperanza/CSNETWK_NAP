@@ -83,7 +83,7 @@ def main():
                     joined = True
                 else:
                     print("Error: Command parameters do not match or is not allowed.")
-            elif user_input == "/join":
+            elif user_input == "/join" or re.match(r'^/join (\S+)$', user_input):
                 print("Error: Command parameters do not match or is not allowed.")
             else:
                 print("Error: Command not found.")
