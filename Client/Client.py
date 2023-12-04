@@ -58,18 +58,38 @@ def is_valid_port(port):
     except:
         return False
 
-def sendFile(fileName, client):
+def sendFile(request, client):
+    parts = request.split()
+    fileName = parts[1]
+    print(f"file name: {fileName}")
 
     currentDirectory = os.path.dirname(os.path.abspath(__file__))
     filePath = os.path.join(currentDirectory, fileName)
 
-    with open(filePath, "rb") as file:
-        content = file.read(SIZE)
-        print(content)
-        while content:
-            print("reading and sending...please wait...")
-            client.send(content)
+    # check if file exists
+    if not os.path.exists(filePath): 
+        client.send("FILE_NOT_FOUND".encode())# response to server
+    else:
+        client.send("FILE_WAS_FOUND".encode())# response to server
+        with open(filePath, "rb") as file:
             content = file.read(SIZE)
+            print(content)
+            while content:
+                print("reading and sending...please wait...")
+                client.send(len(content).to_bytes(4, byteorder='big'))
+                client.send(content)
+                            
+                print(f"sent {content}")
+                content = file.read(SIZE)
+                print("reading done")
+
+            client.send(len(b"FILE_TRANSFER_COMPLETE").to_bytes(4, byteorder='big'))     
+            client.send(b"FILE_TRANSFER_COMPLETE")
+            
+
+    reply = client.recv(SIZE).decode(FORMAT)
+    print(f"{reply}")
+
 
 
 def main():
@@ -159,7 +179,7 @@ def main():
                 print("Disconnecting from the server...")
                 connected = False
 
-            if reply == "hello.txt": #temporary
+            if reply.startswith("/store"):
                 sendFile(reply, client)
 
     except ConnectionRefusedError:

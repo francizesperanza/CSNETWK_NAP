@@ -3,6 +3,7 @@ import threading
 import sys
 import re
 import os
+from datetime import datetime
 
 SIZE = 1024
 FORMAT = "utf-8"
@@ -61,6 +62,7 @@ def print_command_list ():
     """
 
 def handleRegister(conn, registeredUsers, msg, thisUser):
+    print(f"{thisUser} called handleRegister")
     parts = msg.split()
 
     if len(parts) == 2 and parts[1]:
@@ -81,24 +83,58 @@ def handleRegister(conn, registeredUsers, msg, thisUser):
     conn.send(reply.encode(FORMAT))
     return thisUser
 
-def handleStore(conn, msg):
-    reply = "hello.txt"
-    print("sending filename")
+def handleStore(conn, msg, thisUser):
+    parts = msg.split()
+    if thisUser is None:
+        reply = "Error: File Storage Failed. You are not Registered."
+        print("Aboring /store... Client not Registered...")
+
+    elif len(parts) == 2 and parts[1]:
+        print(f"{thisUser} called handleStore")
+        fileName = parts[1] 
+        
+        currentDirectory = os.path.dirname(os.path.abspath(__file__))
+        filePath = os.path.join(currentDirectory, fileName)
+
+        # ask client if file even exists in the first place
+        query = msg
+        print(f"sending query: {query}")
+        conn.send(query.encode(FORMAT))
+
+        # client's response
+        fileStatus = conn.recv(SIZE).decode(FORMAT)
+
+        if fileStatus == "FILE_NOT_FOUND":
+            print(f"{thisUser} sent non-existent filename... aborting process...")
+            reply = "Error: File not found."
+
+        elif fileStatus == "FILE_WAS_FOUND":
+            print(f"{thisUser} sent valid filename... attempting to write file...")
+            if os.path.exists(filePath): # if file exists in server
+                print("File Already Exists in Server Storage... Overwriting File...")
+            with open(filePath, "wb") as file:
+                while True:
+                    print("about to receive")
+                    length_content = conn.recv(4)
+                    size_content = int.from_bytes(length_content, byteorder='big')
+                    content = conn.recv(size_content)
+                    print(f"received: {content}")
+                    if not content or content == b"FILE_TRANSFER_COMPLETE":
+                        print("File Transfer has Finished")
+                        break
+                    file.write(content)
+                timestamp = datetime.now()
+                formatted_timestamp = timestamp.strftime("%Y-%m-%d %H:%M:%S")
+                reply = f"{thisUser} <{formatted_timestamp}>: Uploaded {fileName}"
+
+
+        # if file exists in client directory
+    else:
+        reply = "Error: Command parameters do not match or is not allowed."
+    
     conn.send(reply.encode(FORMAT))
 
-    currentDirectory = os.path.dirname(os.path.abspath(__file__))
-    filePath = os.path.join(currentDirectory, reply)
-
-    print("attempting to write file")
-    with open(filePath, "wb") as file:
-        content = conn.recv(SIZE)
-        print(f"received: {content}")
-        while content:
-            print("writing... please wait...")
-            file.write(content)
-            print("first")
-            content = conn.recv(SIZE)
-            print("second")
+    
 
     
 
@@ -158,11 +194,11 @@ def handle_commands (msg, conn, addr, registeredUsers, thisUser):
         conn.send(reply.encode(FORMAT))
         return False, thisUser
             
-    elif re.match(r'^/register\s*(\S+)?\s*$', msg) and not re.match(r'^/register\S', msg):
+    elif re.match(r'^/register\s*((\S+)?\s*)*$', msg) and not re.match(r'^/register\S', msg):
         thisUser = handleRegister(conn, registeredUsers, msg, thisUser)
 
-    elif re.match(r'^/store\s*(\S+)?\s*$', msg) and not re.match(r'^/store\S', msg):
-        handleStore(conn, msg)
+    elif re.match(r'^/store\s*((\S+)?\s*)*$', msg) and not re.match(r'^/store\S', msg):
+        handleStore(conn, msg, thisUser)
     
     elif re.match(r'^/dir$', msg):
         handleDir(conn, thisUser)
