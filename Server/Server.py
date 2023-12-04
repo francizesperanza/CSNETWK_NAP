@@ -83,6 +83,7 @@ def handleRegister(conn, registeredUsers, msg, thisUser):
     conn.send(reply.encode(FORMAT))
     return thisUser
 
+
 def handleStore(conn, msg, thisUser):
     parts = msg.split()
     if thisUser is None:
@@ -133,9 +134,6 @@ def handleStore(conn, msg, thisUser):
         reply = "Error: Command parameters do not match or is not allowed."
     
     conn.send(reply.encode(FORMAT))
-
-    
-
     
 
 

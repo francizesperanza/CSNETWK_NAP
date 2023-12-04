@@ -91,7 +91,6 @@ def sendFile(request, client):
     print(f"{reply}")
 
 
-
 def main():
     """
     This section checks if the running command for the Client instance is valid
