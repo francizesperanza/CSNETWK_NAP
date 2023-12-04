@@ -1,6 +1,7 @@
 from socket import *
 import re
 import sys
+import os
 
 SIZE = 1024
 FORMAT = "utf-8"
@@ -40,10 +41,14 @@ def print_command_list ():
 
 def is_valid_ip(ip):
     try:
-        inet_aton(ip)
+        inet_pton(AF_INET, ip)
         return True
-    except:
-        return False
+    except error:
+        try:
+            gethostbyname(ip)
+            return True
+        except error:
+            return False
 
 
 def is_valid_port(port):
@@ -52,6 +57,19 @@ def is_valid_port(port):
         return 0 < port < 65536
     except:
         return False
+
+def sendFile(fileName, client):
+
+    currentDirectory = os.path.dirname(os.path.abspath(__file__))
+    filePath = os.path.join(currentDirectory, fileName)
+
+    with open(filePath, "rb") as file:
+        content = file.read(SIZE)
+        print(content)
+        while content:
+            print("reading and sending...please wait...")
+            client.send(content)
+            content = file.read(SIZE)
 
 
 def main():
@@ -82,7 +100,7 @@ def main():
                     ADDR = (ip, int(port))
                     joined = True
                 else:
-                    print("Error: Command parameters do not match or is not allowed.")
+                    print("Error: Invalid value for IP and/or Port")
             elif user_input == "/join" or re.match(r'^/join (\S+)$', user_input):
                 print("Error: Command parameters do not match or is not allowed.")
             else:
@@ -129,7 +147,6 @@ def main():
         client.connect(ADDR)
         print(f"Connection to the File Exchange Server is successful! {ADDR}")
 
-        registeredName = None
         connected = True
         while connected:
             msg = input("Input: ")
@@ -141,6 +158,9 @@ def main():
             if msg == ("/leave"):
                 print("Disconnecting from the server...")
                 connected = False
+
+            if reply == "hello.txt": #temporary
+                sendFile(reply, client)
 
     except ConnectionRefusedError:
         print("Error: Connection to the Server has failed! Please check IP Address and Port Number.")

@@ -11,10 +11,14 @@ SERVER_FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def is_valid_ip(ip):
     try:
-        inet_aton(ip)
+        inet_pton(AF_INET, ip)
         return True
-    except:
-        return False
+    except error:
+        try:
+            gethostbyname(ip)
+            return True
+        except error:
+            return False
 
 
 def is_valid_port(port):
@@ -77,6 +81,28 @@ def handleRegister(conn, registeredUsers, msg, thisUser):
     conn.send(reply.encode(FORMAT))
     return thisUser
 
+def handleStore(conn, msg):
+    reply = "hello.txt"
+    print("sending filename")
+    conn.send(reply.encode(FORMAT))
+
+    currentDirectory = os.path.dirname(os.path.abspath(__file__))
+    filePath = os.path.join(currentDirectory, reply)
+
+    print("attempting to write file")
+    with open(filePath, "wb") as file:
+        content = conn.recv(SIZE)
+        print(f"received: {content}")
+        while content:
+            print("writing... please wait...")
+            file.write(content)
+            print("first")
+            content = conn.recv(SIZE)
+            print("second")
+
+    
+
+
 def handleDir (conn, thisUser):
     if (thisUser):
         try:
@@ -134,6 +160,9 @@ def handle_commands (msg, conn, addr, registeredUsers, thisUser):
             
     elif re.match(r'^/register\s*(\S+)?\s*$', msg) and not re.match(r'^/register\S', msg):
         thisUser = handleRegister(conn, registeredUsers, msg, thisUser)
+
+    elif re.match(r'^/store\s*(\S+)?\s*$', msg) and not re.match(r'^/store\S', msg):
+        handleStore(conn, msg)
     
     elif re.match(r'^/dir$', msg):
         handleDir(conn, thisUser)
