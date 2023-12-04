@@ -77,6 +77,7 @@ def main():
         client.connect(ADDR)
         print(f"Connection to the File Exchange Server is successful! {ADDR}")
 
+        registeredName = None
         connected = True
         while connected:
             msg = input("Input: ")
