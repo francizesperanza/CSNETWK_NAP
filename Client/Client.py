@@ -69,7 +69,11 @@ def sendFile(fileName, client):
         while content:
             print("reading and sending...please wait...")
             client.send(content)
+            print(f"sent {content}")
             content = file.read(SIZE)
+        print("finished sending, signaling finished")
+        client.send(b"FILE_TRANSFER_COMPLETE")
+
 
 
 def main():

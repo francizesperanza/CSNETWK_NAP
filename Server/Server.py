@@ -82,6 +82,8 @@ def handleRegister(conn, registeredUsers, msg, thisUser):
     return thisUser
 
 def handleStore(conn, msg):
+    #TODO: take msg and see if format is valid, if valid proceed...
+    
     reply = "hello.txt"
     print("sending filename")
     conn.send(reply.encode(FORMAT))
@@ -91,14 +93,14 @@ def handleStore(conn, msg):
 
     print("attempting to write file")
     with open(filePath, "wb") as file:
-        content = conn.recv(SIZE)
-        print(f"received: {content}")
-        while content:
-            print("writing... please wait...")
-            file.write(content)
-            print("first")
+        while True:
+            print("about to receive")
             content = conn.recv(SIZE)
-            print("second")
+            print(f"received: {content}")
+            if not content or content == b"FILE_TRANSFER_COMPLETE":
+                break
+            file.write(content)
+        print("out of writing loop")
 
     
 
