@@ -87,6 +87,7 @@ def main():
                 print("Error: Command parameters do not match or is not allowed.")
             else:
                 print("Error: Command not found.")
+
         elif user_input.startswith("/register"):
             if re.match(r'^/register (\S+)$', user_input):
                 print("Error: Registration failed. Please connect to the server first.")
@@ -94,6 +95,7 @@ def main():
                 print("Error: Command parameters do not match or is not allowed. You also need to join the File Exchange Server first.")
             else:
                 print("Error: Command not found.")
+
         elif user_input.startswith("/store"):
             if re.match(r'^/store (\S+)$', user_input):
                 print("Error: File storing failed. Please connect to the server first.")
@@ -101,6 +103,7 @@ def main():
                 print("Error: Command parameters do not match or is not allowed. You also need to join the File Exchange Server first.")
             else:
                 print("Error: Command not found.")
+
         elif user_input.startswith("/get"):
             if re.match(r'^/get (\S+)$', user_input):
                 print("Error: File fetching failed. Please connect to the server first.")
@@ -108,10 +111,13 @@ def main():
                 print("Error: Command parameters do not match or is not allowed. You also need to join the File Exchange Server first.")
             else:
                 print("Error: Command not found.")
+
         elif re.match(r'^/leave$', user_input):
             print("Error: Disconnection failed. Please connect to the server first.")
+
         elif re.match(r'^/dir$', user_input):
-            print("Error: File directory request failed. Please connect to the server first.")
+            print("Error: File directory list request failed. Please connect to the server first.")
+            
         elif re.match(r'^/\?$', user_input):
             print_command_list()
         else:
@@ -138,6 +144,9 @@ def main():
 
     except ConnectionRefusedError:
         print("Error: Connection to the Server has failed! Please check IP Address and Port Number.")
+    except ConnectionResetError:
+        print("Error: Server shut down.")
+
     finally:
         client.close()
 

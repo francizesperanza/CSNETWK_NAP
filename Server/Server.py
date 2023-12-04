@@ -2,9 +2,11 @@ from socket import *
 import threading
 import sys
 import re
+import os
 
 SIZE = 1024
 FORMAT = "utf-8"
+SERVER_FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 def is_valid_ip(ip):
@@ -75,10 +77,33 @@ def handleRegister(conn, registeredUsers, msg, thisUser):
     conn.send(reply.encode(FORMAT))
     return thisUser
 
+def handleDir (conn, thisUser):
+    if (thisUser):
+        try:
+            print(f"{thisUser} requested for the file directory list.")
+            filenames = [f for f in os.listdir(SERVER_FILE_DIR) if os.path.isfile(os.path.join(SERVER_FILE_DIR, f))]
+            
+            filenames = [filename for filename in filenames if filename != 'Server.py']
+            
+            if len(filenames) == 0:
+                reply = "There are currently no files in the File Exchange Server."
+            else:
+                reply = "Server Directory:\n\n"
+                for i in range(len(filenames)):
+                    reply = reply + filenames[i] + "\n"
+            
+            conn.send(reply.encode(FORMAT))
+        except FileNotFoundError:
+            reply = f"The directory '{SERVER_FILE_DIR}' does not exist."
+            conn.send(reply.encode(FORMAT))
+    else:
+        reply = "Error: File directory list request failed. Please register an alias first."
+        conn.send(reply.encode(FORMAT))
+
 
 def handle_commands (msg, conn, addr, registeredUsers, thisUser):
-    if msg.startswith("/join"):
-        if re.match(r'^/join (\S+) (\S+)$', msg):
+    if re.match(r'^/join(?: (\S+)(?: (\S+))?)?$', msg):
+        if re.match(r'^/join (\S+) (\S+)?$', msg):
             if(thisUser):
                 print(f"{thisUser} tried to join the File Exchange Server again.")
             else:
@@ -87,37 +112,31 @@ def handle_commands (msg, conn, addr, registeredUsers, thisUser):
             conn.send(reply.encode(FORMAT))
             
         else:
-            reply = "Error: Command parameters do not match or is not allowed."
+            reply = "Error: Command parameters do not match or is not allowed. Also, you already joined the File Exchange Server."
             conn.send(reply.encode(FORMAT))
             
-    elif msg.startswith("/?"):
-        if re.match(r'^/\?$', msg):
-            if(thisUser):
-                print(f"{thisUser} requested for help.")
-            else:
-                print(f"User {addr} requested for help.")
-            help = print_command_list()
-            conn.send(help.encode(FORMAT))
-            
+    elif re.match(r'^/\?$', msg):
+        if(thisUser):
+            print(f"{thisUser} requested for help.")
         else:
-            reply = "Error: Command parameters do not match or is not allowed."
-            conn.send(reply.encode(FORMAT))
+            print(f"User {addr} requested for help.")
+        help = print_command_list()
+        conn.send(help.encode(FORMAT))
             
-    elif msg.startswith("/leave"):
-        if re.match(r'^/leave$', msg):
-            if(thisUser):
-                print(f"{thisUser} disconnected from the server.")
-            else:
-                print(f"User {addr} disconnected from the server.")
-            reply = "Connection closed. Thank you!"
-            conn.send(reply.encode(FORMAT))
-            return False, thisUser
+    elif re.match(r'^/leave$', msg):
+        if(thisUser):
+            print(f"{thisUser} disconnected from the server.")
         else:
-            reply = "Error: Command parameters do not match or is not allowed."
-            conn.send(reply.encode(FORMAT))
+            print(f"User {addr} disconnected from the server.")
+        reply = "Connection closed. Thank you!"
+        conn.send(reply.encode(FORMAT))
+        return False, thisUser
             
     elif re.match(r'^/register\s*(\S+)?\s*$', msg) and not re.match(r'^/register\S', msg):
         thisUser = handleRegister(conn, registeredUsers, msg, thisUser)
+    
+    elif re.match(r'^/dir$', msg):
+        handleDir(conn, thisUser)
             
     else:
         reply = "Error: Command not found."
