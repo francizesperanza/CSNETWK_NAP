@@ -60,11 +60,8 @@ def is_valid_port(port):
         return False
 
 def sendFile(request, client):
-    print("request: ", request)
     parts = request.split()
     fileName = parts[1]
-    print("fileName: ", fileName)
-    print(f"file name: {fileName}")
 
     currentDirectory = os.path.dirname(os.path.abspath(__file__))
     filePath = os.path.join(currentDirectory, fileName)
@@ -76,15 +73,10 @@ def sendFile(request, client):
         client.send("FILE_WAS_FOUND".encode())# response to server
         with open(filePath, "rb") as file:
             content = file.read(SIZE)
-            print(content)
             while content:
-                print("reading and sending...please wait...")
                 client.send(len(content).to_bytes(4, byteorder='big'))
                 client.send(content)
-                            
-                print(f"sent {content}")
                 content = file.read(SIZE)
-                print("reading done")
 
             client.send(len(b"FILE_TRANSFER_COMPLETE").to_bytes(4, byteorder='big'))     
             client.send(b"FILE_TRANSFER_COMPLETE")
@@ -92,6 +84,7 @@ def sendFile(request, client):
 
     reply = client.recv(SIZE).decode(FORMAT)
     print(f"{reply}")
+
 
 def getFile(reply, client):
     parts = reply.split()
