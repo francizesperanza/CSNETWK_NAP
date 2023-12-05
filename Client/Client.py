@@ -86,21 +86,10 @@ def sendFile(request, client):
     print(f"{reply}")
 
 
-def getFile(reply, client):
-    parts = reply.split()
-    
-    # if len(parts) == 2 and parts[1]:
-    fileName = parts[1]
-    # print("Fetching File: ", fileName)
-
+def getFile(reply, client):   
     query = reply
-    # print(f"sending query: {query}")
     client.send(query.encode(FORMAT))
     
-    # else:
-    #     reply = "Error: Command parameters do not match or is not allowed."
-    
-    # client.send(reply.encode(FORMAT))
 
 def receiveFile(client, fileName):
     currentDirectory = os.path.dirname(os.path.abspath(__file__))
@@ -121,6 +110,18 @@ def receiveFile(client, fileName):
         timestamp = datetime.now()
         formatted_timestamp = timestamp.strftime("%Y-%m-%d %H:%M:%S")
         print(f"<{formatted_timestamp}>: Downloaded {fileName}")
+
+def join_server(ip, port):
+    ADDR = (ip, int(port))
+    client = socket(AF_INET, SOCK_STREAM)
+
+    try:
+        client.connect(ADDR)
+        print(f"Connection to the File Exchange Server is successful! {ADDR}")
+        return client
+    except ConnectionRefusedError:
+        print("Error: Connection to the Server has failed! Please check IP Address and Port Number.")
+        return None
 
 def main():
     """
@@ -147,8 +148,9 @@ def main():
                 port = match.group(2)
 
                 if is_valid_ip(ip) and is_valid_port(port):
-                    ADDR = (ip, int(port))
-                    joined = True
+                    client = join_server(ip, port)
+                    if client:
+                        joined = True
                 else:
                     print("Error: Invalid value for IP and/or Port")
             elif user_input == "/join" or re.match(r'^/join (\S+)$', user_input):
@@ -191,12 +193,7 @@ def main():
         else:
             print("Error: Command not found.")
 
-    client = socket(AF_INET, SOCK_STREAM)
-
     try:
-        client.connect(ADDR)
-        print(f"Connection to the File Exchange Server is successful! {ADDR}")
-
         connected = True
         while connected:
             msg = input("Input: ")
