@@ -3,7 +3,6 @@ import re
 import sys
 import os
 from datetime import datetime
-# import shutil
 
 SIZE = 1024
 FORMAT = "utf-8"
