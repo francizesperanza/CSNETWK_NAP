@@ -85,11 +85,7 @@ def handleRegister(conn, registeredUsers, msg, thisUser):
 
 
 def handleStore(conn, msg, thisUser):
-    print("conn: ", conn)
-    print("msg: ", msg)
-    print("thisUser: ", thisUser)
     parts = msg.split()
-    print("parts: ", parts)
     if thisUser is None:
         reply = "Error: File Storage Failed. You are not Registered."
         print("Aboring /store... Client not Registered...")
@@ -115,22 +111,25 @@ def handleStore(conn, msg, thisUser):
 
         elif fileStatus == "FILE_WAS_FOUND":
             print(f"{thisUser} sent valid filename... attempting to write file...")
+            reply = ""
+
             if os.path.exists(filePath): # if file exists in server
                 print("File Already Exists in Server Storage... Overwriting File...")
+                reply += "Note: A File with the Same Name Already Exists in Server Storage. Overwriting File...\n"
+
             with open(filePath, "wb") as file:
                 while True:
-                    print("about to receive")
                     length_content = conn.recv(4)
                     size_content = int.from_bytes(length_content, byteorder='big')
                     content = conn.recv(size_content)
-                    print(f"received: {content}")
                     if not content or content == b"FILE_TRANSFER_COMPLETE":
                         print("File Transfer has Finished")
                         break
                     file.write(content)
                 timestamp = datetime.now()
                 formatted_timestamp = timestamp.strftime("%Y-%m-%d %H:%M:%S")
-                reply = f"{thisUser} <{formatted_timestamp}>: Uploaded {fileName}"
+                
+                reply += f"{thisUser} <{formatted_timestamp}>: Uploaded {fileName}"
 
 
         # if file exists in client directory
