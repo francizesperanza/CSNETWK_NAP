@@ -145,6 +145,7 @@ def handleGet(conn, msg, thisUser):
     if thisUser is None:
         reply = "Error: Get File Failed. You are not Registered."
         print("Aborting /get... Client not Registered...")
+        conn.send(reply.encode(FORMAT))
     
     elif len(parts) == 2 and parts[1]:
         print(f"{thisUser} called handleGet")
@@ -174,10 +175,9 @@ def handleGet(conn, msg, thisUser):
                 conn.send(len(b"FILE_TRANSFER_COMPLETE").to_bytes(4, byteorder='big'))     
                 conn.send(b"FILE_TRANSFER_COMPLETE")
 
-    # else:
-    #     reply = "Error: Command parameters do not match or is not allowed."
-    
-    # conn.send(reply.encode(FORMAT))
+    else:
+        reply = "Error: Command parameters do not match or is not allowed."
+        conn.send(reply.encode(FORMAT))
 
 def handleDir (conn, thisUser):
     if (thisUser):
