@@ -3,6 +3,7 @@ import re
 import sys
 import os
 from datetime import datetime
+# import shutil
 
 SIZE = 1024
 FORMAT = "utf-8"
@@ -89,74 +90,38 @@ def sendFile(request, client):
 def getFile(reply, client):
     parts = reply.split()
     
-    if len(parts) == 2 and parts[1]:
-        fileName = parts[1]
-        print("fileName: ", fileName)
+    # if len(parts) == 2 and parts[1]:
+    fileName = parts[1]
+    # print("Fetching File: ", fileName)
 
-        currentDirectory = os.path.dirname(os.path.abspath(__file__))
-        filePath = os.path.join(currentDirectory, fileName)
-
-        query = reply
-        print(f"sending query: {query}")
-        client.send(query.encode(FORMAT))
-
-        fileStatus = client.recv(SIZE).decode(FORMAT)
-
-        if fileStatus == "FILE_NOT_FOUND":
-            print("sent non-existent filename... aborting process...")
-            reply = "Error: File not found."
-
-        elif fileStatus == "FILE_WAS_FOUND":
-            print("sent valid filename... attempting to write file...")
-            if os.path.exists(filePath): # if file exists in server
-                print("File Already Exists in Server Storage... Overwriting File...")
-            with open(filePath, "wb") as file:
-                while True:
-                    print("about to receive")
-                    length_content = client.recv(4)
-                    size_content = int.from_bytes(length_content, byteorder='big')
-                    content = client.recv(size_content)
-                    print(f"received: {content}")
-                    if not content or content == b"FILE_TRANSFER_COMPLETE":
-                        print("File Transfer has Finished")
-                        break
-                    file.write(content)
-                timestamp = datetime.now()
-                formatted_timestamp = timestamp.strftime("%Y-%m-%d %H:%M:%S")
-                reply = f"<{formatted_timestamp}>: Downloaded {fileName}"
+    query = reply
+    # print(f"sending query: {query}")
+    client.send(query.encode(FORMAT))
     
-    else:
-        reply = "Error: Command parameters do not match or is not allowed."
+    # else:
+    #     reply = "Error: Command parameters do not match or is not allowed."
     
-    client.send(reply.encode(FORMAT))
+    # client.send(reply.encode(FORMAT))
 
+def receiveFile(client, fileName):
+    currentDirectory = os.path.dirname(os.path.abspath(__file__))
+    filePath = os.path.join(currentDirectory, fileName)
 
-
-# def getFile(client, fileName):
-#     # with open(fileName, "wb") as file:
-#     #     while True:
-#     #         content = client.recv(SIZE)#.decode(FORMAT)
-#     #         print("content recv: ", content)
-#     #         if content == b"<F_I_N>":
-#     #             print(f"Finished getting file: {fileName}")
-#     #             break
-#     #         file.write(content)
-
-#     currentDirectory = os.path.dirname(os.path.abspath(__file__))
-#     filePath = os.path.join(currentDirectory, fileName)
-#     print("filePath: ", filePath)
-    
-#     with open(filePath, "wb") as file:
-#         while True:
-#             length_content = client.recv(4)
-#             size_content = int.from_bytes(length_content, byteorder='big')
-#             content = client.recv(size_content)
-#             print(f"received: {content}")
-#             if not content or content == b"FILE_TRANSFER_COMPLETE":
-#                 print(f"Finished getting file: {fileName}")
-#                 break
-#             file.write(content)
-
+    print(f"File Received from Server: {fileName}")
+    if os.path.exists(filePath): # if file exists in client
+        print("File Already Exists in Client Storage... Overwriting File...")
+    with open(filePath, "wb") as file:
+        while True:
+            length_content = client.recv(4)
+            size_content = int.from_bytes(length_content, byteorder='big')
+            content = client.recv(size_content)
+            if not content or content == b"FILE_TRANSFER_COMPLETE":
+                # print("File Transfer has Finished")
+                break
+            file.write(content)
+        timestamp = datetime.now()
+        formatted_timestamp = timestamp.strftime("%Y-%m-%d %H:%M:%S")
+        print(f"<{formatted_timestamp}>: Downloaded {fileName}")
 
 def main():
     """
@@ -248,16 +213,13 @@ def main():
             if reply.startswith("/store"):
                 sendFile(reply, client)
 
-            # if msg.startswith("/get"):
-            #     if re.match(r'^/get (\S+)$', msg):
-            #         fileName = re.match(r'^/get (\S+)$', msg).group(1)
-            #         # print("fileName: ", fileName)
-            #         getFile(client, fileName)
-            #     else:
-            #         print("Error: Invalid command syntax for /get.")
-
             if reply.startswith("/get"):
                 getFile(reply, client)
+
+            if reply == ("File Exists in the Server"):
+                if re.match(r'^/get (\S+)$', msg):
+                    fileName = re.match(r'^/get (\S+)$', msg).group(1)
+                    receiveFile(client, fileName)
 
 
     except ConnectionRefusedError:
