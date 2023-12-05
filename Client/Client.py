@@ -119,7 +119,7 @@ def join_server(ip, port):
         client.connect(ADDR)
         print(f"Connection to the File Exchange Server is successful! {ADDR}")
         return client
-    except ConnectionRefusedError:
+    except (ConnectionRefusedError, TimeoutError):
         print("Error: Connection to the Server has failed! Please check IP Address and Port Number.")
         return None
 
