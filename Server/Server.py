@@ -10,6 +10,10 @@ FORMAT = "utf-8"
 SERVER_FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
+# This function checks if the IP address is valid format-wise
+# param ip - IP address of the server
+# returns True if valid, False if not
+
 def is_valid_ip(ip):
     try:
         inet_pton(AF_INET, ip)
@@ -21,6 +25,9 @@ def is_valid_ip(ip):
         except error:
             return False
 
+# This function checks if the port number is valid format-wise
+# param port - port where the server is listening in
+# returns True if valid, False if not
 
 def is_valid_port(port):
     try:
@@ -29,6 +36,8 @@ def is_valid_port(port):
     except:
         return False
 
+# This function returns the command list when the user uses the command /?
+# returns a string containing the command list
 
 def print_command_list ():
     return """
@@ -61,6 +70,14 @@ def print_command_list ():
 
     """
 
+# This function assigns the client a unique alias
+# param conn - a socket object that is connected to the client
+# param registeredUsers - an array of strings that contain the aliases of
+#                         current registered users
+# param msg - a message from the client
+# param thisUser - the current alias of the client
+# returns a string that contains the new alias of the user
+
 def handleRegister(conn, registeredUsers, msg, thisUser):
     print(f"{thisUser} called handleRegister")
     parts = msg.split()
@@ -83,6 +100,10 @@ def handleRegister(conn, registeredUsers, msg, thisUser):
     conn.send(reply.encode(FORMAT))
     return thisUser
 
+# This function allows the client to store a file in the server
+# param conn - a socket object that is connected to the client
+# param msg - a message from the client
+# param thisUser - the current alias of the client
 
 def handleStore(conn, msg, thisUser):
     parts = msg.split()
@@ -137,7 +158,11 @@ def handleStore(conn, msg, thisUser):
         reply = "Error: Command parameters do not match or is not allowed."
     
     conn.send(reply.encode(FORMAT))
-    
+
+# This function allows the client to fetch a file from the server
+# param conn - a socket object that is connected to the client
+# param msg - a message from the client
+# param thisUser - the current alias of the client
 
 def handleGet(conn, msg, thisUser):
     parts = msg.split()
@@ -179,6 +204,10 @@ def handleGet(conn, msg, thisUser):
         reply = "Error: Command parameters do not match or is not allowed."
         conn.send(reply.encode(FORMAT))
 
+# This function sends the file directory list to the client
+# param conn - a socket object that is connected to the client
+# param thisUser - the current alias of the client
+
 def handleDir (conn, thisUser):
     if (thisUser):
         try:
@@ -202,6 +231,16 @@ def handleDir (conn, thisUser):
         reply = "Error: File directory list request failed. Please register an alias first."
         conn.send(reply.encode(FORMAT))
 
+# This function handles all the commands from the client
+# param msg - a message from the client
+# param conn - a socket object that is connected to the client
+# param addr - the client's address
+# param registeredUsers - an array of strings that contain the aliases of
+#                         current registered users
+# param thisUser - the current alias of the client
+# returns:
+#        True if client is still connected, False if not
+#        a string containing the current alias of the client
 
 def handle_commands (msg, conn, addr, registeredUsers, thisUser):
     if re.match(r'^/join(?: (\S+)(?: (\S+))?)?$', msg):
@@ -251,6 +290,12 @@ def handle_commands (msg, conn, addr, registeredUsers, thisUser):
         conn.send(reply.encode(FORMAT))
 
     return True, thisUser
+
+# This function handles the client in its assigned thread
+# param conn - a socket object that is connected to the client
+# param addr - the client's address
+# param registeredUsers - an array of strings that contain the aliases of
+#                         current registered users
 
 def handle_client(conn, addr, registeredUsers):
     print(f"New client connected {addr}")

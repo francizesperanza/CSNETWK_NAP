@@ -4,9 +4,13 @@ import sys
 import os
 from datetime import datetime
 
+# Constants
+
 SIZE = 1024
 FORMAT = "utf-8"
 ADDR = ('',12345)
+
+# This function prints the command list when the user uses the command /?
 
 def print_command_list ():
     print("""
@@ -39,6 +43,9 @@ def print_command_list ():
 
     """)
 
+# This function checks if the IP address is valid format-wise
+# param ip - IP address of the server
+# returns True if valid, False if not
 
 def is_valid_ip(ip):
     try:
@@ -51,6 +58,9 @@ def is_valid_ip(ip):
         except error:
             return False
 
+# This function checks if the port number is valid format-wise
+# param port - port where the server is listening in
+# returns True if valid, False if not
 
 def is_valid_port(port):
     try:
@@ -58,6 +68,10 @@ def is_valid_port(port):
         return 0 < port < 65536
     except:
         return False
+
+# This function sends a file on the client's directory if the /store command was used
+# param request - the message that the user sent the server
+# param client - the socket object that is connected to the server
 
 def sendFile(request, client):
     parts = request.split()
@@ -85,11 +99,18 @@ def sendFile(request, client):
     reply = client.recv(SIZE).decode(FORMAT)
     print(f"{reply}")
 
+# This function sends a get request to the server if the /get command was used
+# param reply - the message that the user sent the server
+# param client - the socket object that is connected to the server
 
 def getFile(reply, client):   
     query = reply
     client.send(query.encode(FORMAT))
-    
+
+# This function receives a file from the server if the filename exists in the
+# server's directory.
+# param client - the socket object that is connected to the server
+# param fileName - a string containing the filename
 
 def receiveFile(client, fileName):
     currentDirectory = os.path.dirname(os.path.abspath(__file__))
@@ -104,12 +125,16 @@ def receiveFile(client, fileName):
             size_content = int.from_bytes(length_content, byteorder='big')
             content = client.recv(size_content)
             if not content or content == b"FILE_TRANSFER_COMPLETE":
-                # print("File Transfer has Finished")
                 break
             file.write(content)
         timestamp = datetime.now()
         formatted_timestamp = timestamp.strftime("%Y-%m-%d %H:%M:%S")
         print(f"<{formatted_timestamp}>: Downloaded {fileName}")
+
+# This function connects the client to the server
+# param ip - IP address of the server
+# param port - port where the server is listening in
+# returns a socket object
 
 def join_server(ip, port):
     ADDR = (ip, int(port))
@@ -124,9 +149,9 @@ def join_server(ip, port):
         return None
 
 def main():
-    """
-    This section checks if the running command for the Client instance is valid
-    """
+
+    # This section checks if the running command for the Client instance is valid
+
     if len(sys.argv) != 2:
         print("The format is: python Server.py <client_name>")
         return
@@ -135,9 +160,10 @@ def main():
     joined = False
     print(f"Hello, {client_name}. Start by joining the File Exchange Server. Type \"/?\" for help.\n")
 
-    """
-    This section checks if client has joined the server or not
-    """
+
+    # This section checks if client has joined the server or not. When the client inputs an
+    # invalid command, its corresponding error message is sent to the client application
+
     while not joined:
         user_input = input("Input: ")
         match = re.match(r'^/join (\S+) (\S+)$', user_input)
@@ -192,6 +218,9 @@ def main():
             print_command_list()
         else:
             print("Error: Command not found.")
+
+    # Once the client successfully joins the File Exchange Server, they will be free to chat
+    # and send commands to the Server.
 
     try:
         connected = True
